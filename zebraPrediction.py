@@ -41,7 +41,7 @@ yhat = model.predict(image)
 print([a.shape for a in yhat])
 
 # Función para decodificar los resultados del modelo (https://raw.githubusercontent.com/experiencor/keras-yolo3/master/yolo3_one_file_to_detect_them_all.py)
-def decode_netout(netout, anchors, obj_thresh, nms_thresh, net_h, net_w):
+def decode_netout(netout, anchors, obj_thresh, net_h, net_w):
     grid_h, grid_w = netout.shape[:2]
     nb_box = 3
     netout = netout.reshape((grid_h, grid_w, nb_box, -1))
