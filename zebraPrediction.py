@@ -216,7 +216,7 @@ def draw_boxes(filename, v_boxes, v_labels, v_scores):
 model = load_model('model.h5')
 # Definimos el tamaño objetivo y la foto
 input_w, input_h = 416, 416
-photo_filename = 'desktop.jpeg'
+photo_filename = 'images/desktop.jpeg'
 # cargamos y preparamos la imagen usando nuestra función
 image, image_w, image_h = load_image_pixels(photo_filename, (input_w, input_h))
 # Cargamos la foto en el modelo Keras y hacemos una predicción
