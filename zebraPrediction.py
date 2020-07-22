@@ -31,7 +31,7 @@ def load_image_pixels(filename, shape):
 
 # Definimos el tamaño objetivo y la foto
 input_w, input_h = 416, 416
-photo_filename = 'zebra.jpg'
+photo_filename = 'desktop.jpeg'
 # cargamos y preparamos la imagen usando nuestra función
 image, image_w, image_h = load_image_pixels(photo_filename, (input_w, input_h))
 
@@ -125,12 +125,7 @@ for i in range(len(yhat)):
 # Transformamos las cajas delimitadoras obtenidas a las adecuadas para el tamaño de la foto original
 
 def correct_yolo_boxes(boxes, image_h, image_w, net_h, net_w):
-    if (float(net_w) / image_w) < (float(net_h) / image_h):
-        new_w = net_w
-        new_h = (image_h * net_w) / image_w
-    else:
-        new_h = net_w
-        new_w = (image_w * net_h) / image_h
+    new_w, new_h = net_w, net_h
 
     for i in range(len(boxes)):
         x_offset, x_scale = (net_w - new_w) / 2. / net_w, float(new_w) / net_w
