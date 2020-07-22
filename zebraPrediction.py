@@ -1,3 +1,5 @@
+#### IMPORTS/IMPORTACIONES ####
+
 from numpy import expand_dims
 from keras.models import load_model
 from keras.preprocessing.image import load_img
@@ -7,40 +9,10 @@ from matplotlib.patches import Rectangle
 import numpy as np
 
 
+################ External functions of Python YOLO3 project / Funciones externas del un proyecto YOLO3 Python ################
+# https://raw.githubusercontent.com/experiencor/keras-yolo3/master/yolo3_one_file_to_detect_them_all.py
 
-# cargamos el modelo keras que creamos con los pesos pre-entrenados
-model = load_model('model.h5')
-
-# creamos una función que englobe toda la funcionalidad de carga y tratado de imagen
-def load_image_pixels(filename, shape):
-    # cargar la imagen para guardar su formato
-    image = load_img(filename)
-    width, height = image.size
-
-    # cargar la ilmagen con el tamaño requerido
-    image = load_img(filename, target_size=shape)
-    # convertir a array numpy
-    image = img_to_array(image)
-    # escalar pixels en valores [0,1]
-    image = image.astype('float32')
-    image /= 255.0
-
-    # agregue una dimensión para que tengamos una muestra
-    image = expand_dims(image, 0)
-    return image, width, height
-
-# Definimos el tamaño objetivo y la foto
-input_w, input_h = 416, 416
-photo_filename = 'desktop.jpeg'
-# cargamos y preparamos la imagen usando nuestra función
-image, image_w, image_h = load_image_pixels(photo_filename, (input_w, input_h))
-
-# Cargamos la foto en el modelo Keras y hacemos una predicción
-yhat = model.predict(image)
-# resume la forma de la lista de matrices
-print([a.shape for a in yhat])
-
-# Función para decodificar los resultados del modelo (https://raw.githubusercontent.com/experiencor/keras-yolo3/master/yolo3_one_file_to_detect_them_all.py)
+# Función para decodificar los resultados del modelo
 def decode_netout(netout, anchors, obj_thresh, net_h, net_w):
     grid_h, grid_w = netout.shape[:2]
     nb_box = 3
@@ -59,21 +31,21 @@ def decode_netout(netout, anchors, obj_thresh, net_h, net_w):
         col = i % grid_w
 
         for b in range(nb_box):
-            # 4th element is objectness score
+            # 4to elemento es el puntaje de objetividad
             objectness = netout[int(row)][int(col)][b][4]
             # objectness = netout[..., :4]
 
             if (objectness.all() <= obj_thresh): continue
 
-            # first 4 elements are x, y, w, and h
+            # Los primeros 4 elementos son x, y, w y h
             x, y, w, h = netout[int(row)][int(col)][b][:4]
 
-            x = (col + x) / grid_w  # center position, unit: image width
-            y = (row + y) / grid_h  # center position, unit: image height
-            w = anchors[2 * b + 0] * np.exp(w) / net_w  # unit: image width
-            h = anchors[2 * b + 1] * np.exp(h) / net_h  # unit: image height
+            x = (col + x) / grid_w  # posición central, unidad: ancho de imagen
+            y = (row + y) / grid_h  # posición central, unidad: altura de imagen
+            w = anchors[2 * b + 0] * np.exp(w) / net_w  # unidad: ancho de imagen
+            h = anchors[2 * b + 1] * np.exp(h) / net_h  # unidad: altura de imagen
 
-            # last elements are class probabilities
+            # los últimos elementos son probabilidades de clase
             classes = netout[int(row)][col][b][5:]
 
             box = BoundBox(x - w / 2, y - h / 2, x + w / 2, y + h / 2, objectness, classes)
@@ -112,18 +84,6 @@ class BoundBox:
 def _sigmoid(x):
     return 1. / (1. + np.exp(-x))
 
-
-# Definición de anclas
-anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
-# Definimos el umbral de probabilidad para los objetos detectados
-class_threshold = 0.6
-boxes = list()
-for i in range(len(yhat)):
-    # decodificamos la salida de la red (la solución que nos dió el modelo)
-    boxes += decode_netout(yhat[i][0], anchors[i], class_threshold, input_h, input_w)
-
-# Transformamos las cajas delimitadoras obtenidas a las adecuadas para el tamaño de la foto original
-
 def correct_yolo_boxes(boxes, image_h, image_w, net_h, net_w):
     new_w, new_h = net_w, net_h
 
@@ -135,10 +95,6 @@ def correct_yolo_boxes(boxes, image_h, image_w, net_h, net_w):
         boxes[i].xmax = int((boxes[i].xmax - x_offset) / x_scale * image_w)
         boxes[i].ymin = int((boxes[i].ymin - y_offset) / y_scale * image_h)
         boxes[i].ymax = int((boxes[i].ymax - y_offset) / y_scale * image_h)
-
-correct_yolo_boxes(boxes, image_h, image_w, input_h, input_w)
-
-# manejamos la superposición de cuadros delimitadores
 
 def do_nms(boxes, nms_thresh):
     if len(boxes) > 0:
@@ -189,10 +145,30 @@ def _interval_overlap(interval_a, interval_b):
         else:
             return min(x2,x4) - x3
 
-do_nms(boxes, 0.5)
 
-# Nos quedamos con los resultados que superen el porcentaje de confianza
 
+
+################ Created functions / Funciones creadas ################
+
+# creamos una función que englobe toda la funcionalidad de carga y tratado de imagen
+def load_image_pixels(filename, shape):
+    # cargar la imagen para guardar su formato
+    image = load_img(filename)
+    width, height = image.size
+
+    # cargar la ilmagen con el tamaño requerido
+    image = load_img(filename, target_size=shape)
+    # convertir a array numpy
+    image = img_to_array(image)
+    # escalar pixels en valores [0,1]
+    image = image.astype('float32')
+    image /= 255.0
+
+    # agregue una dimensión para que tengamos una muestra
+    image = expand_dims(image, 0)
+    return image, width, height
+
+# Función para quedarnos con los resultados que superen el porcentaje de confianza
 def get_boxes(boxes, labels, thresh):
     v_boxes, v_labels, v_scores = list(), list(), list()
     # enumerar todos los cuadros delimitadores
@@ -206,22 +182,6 @@ def get_boxes(boxes, labels, thresh):
                 v_scores.append(box.classes[i] * 100)
                 # no hacer break, pueden activarse varias etiquetas en una caja
     return v_boxes, v_labels, v_scores
-
-
-# definición de etiqutas. Nombre de los objetos del conjunto de datos MSCOCO.
-labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
-    "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
-    "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe",
-    "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard",
-    "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana",
-    "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
-    "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse",
-    "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator",
-    "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
-
-# Llamamos a la función que creamos para obtener los detalles de qué objetos hemos sido capaces de detectar
-v_boxes, v_labels, v_scores = get_boxes(boxes, labels, class_threshold)
 
 def draw_boxes(filename, v_boxes, v_labels, v_scores):
     # cargar la imagen
@@ -249,5 +209,44 @@ def draw_boxes(filename, v_boxes, v_labels, v_scores):
         pyplot.text(x1, y1, label, color='white')
     pyplot.show()
 
+
+################ Main code / Código principal ################
+
+# cargamos el modelo keras que creamos con los pesos pre-entrenados
+model = load_model('model.h5')
+# Definimos el tamaño objetivo y la foto
+input_w, input_h = 416, 416
+photo_filename = 'tijera.jpeg'
+# cargamos y preparamos la imagen usando nuestra función
+image, image_w, image_h = load_image_pixels(photo_filename, (input_w, input_h))
+# Cargamos la foto en el modelo Keras y hacemos una predicción
+yhat = model.predict(image)
+# resume la forma de la lista de matrices
+print([a.shape for a in yhat])
+# Definición de anclas
+anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
+# Definimos el umbral de probabilidad para los objetos detectados
+class_threshold = 0.6
+boxes = list()
+for i in range(len(yhat)):
+    # decodificamos la salida de la red (la solución que nos dió el modelo)
+    boxes += decode_netout(yhat[i][0], anchors[i], class_threshold, input_h, input_w)
+# Transformamos las cajas delimitadoras obtenidas a las adecuadas para el tamaño de la foto original
+correct_yolo_boxes(boxes, image_h, image_w, input_h, input_w)
+# manejamos la superposición de cuadros delimitadores
+do_nms(boxes, 0.5)
+# definición de etiqutas. Nombre de los objetos del conjunto de datos MSCOCO.
+labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
+    "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
+    "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe",
+    "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard",
+    "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana",
+    "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
+    "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse",
+    "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator",
+    "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
+# Llamamos a la función que creamos para obtener los detalles de qué objetos hemos sido capaces de detectar
+v_boxes, v_labels, v_scores = get_boxes(boxes, labels, class_threshold)
 # ahora podemos llamar a la función creada y ver la predicción
 draw_boxes(photo_filename, v_boxes, v_labels, v_scores)
